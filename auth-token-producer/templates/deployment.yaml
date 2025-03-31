@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-token-file-pm-producer-json2kafka
+  labels:
+    app: auth-token-file-pm-producer-json2kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-token-file-pm-producer-json2kafka
+  template:
+    metadata:
+      labels:
+        app: auth-token-file-pm-producer-json2kafka
+    spec:
+      containers:
+      - name: auth-token-file-pm-producer-json2kafka
+        image: nexus3.o-ran-sc.org:10001/o-ran-sc/nonrtric-plt-auth-token-fetch:1.1.1
+        env:
+        - name: CREDS_GRANT_TYPE
+          value: "client_credentials"
+        - name: CREDS_CLIENT_SECRET
+          value: "Y9pp8GAVIbdK9Cpup3IcUogjM5ub6Sgs"
+        - name: CREDS_CLIENT_ID
+          value: "pm-producer-json2kafka"
+        - name: AUTH_SERVICE_URL
+          value: "http://keycloak:8080/realms/nonrtric-realm/protocol/openid-connect/token"
+        - name: OUTPUT_FILE
+          value: "/token-cache/jwt.txt"
+        volumeMounts:
+        - name: token-cache-volume
+          mountPath: /token-cache
+      volumes:
+      - name: token-cache-volume
+      persistentVolumeClaim:
+        claimName: token-cache-pvc

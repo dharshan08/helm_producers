@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-producer-pm-xml2json
+  labels:
+    app: kafka-producer-pm-xml2json
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-producer-pm-xml2json
+  template:
+    metadata:
+      labels:
+        app: kafka-producer-pm-xml2json
+        ranpm: "yes"
+    spec:
+      containers:
+      - name: kafka-producer-pm-xml2json-0
+        image: nexus3.o-ran-sc.org:10001/o-ran-sc/nonrtric-plt-ranpm-pm-file-converter:1.0.1
+        ports:
+        - containerPort: 80
+          hostPort: 9881
+        env:
+        - name: KP
+          value: "kafka-producer-pm-xml2json-0"
+        - name: FILES_VOLUME
+          value: "/pm-files"
+        - name: KAFKA_SERVER
+          value: "kafka:9097"
+        - name: ICS
+          value: "ics:8083"
+        - name: SELF
+          value: "kafka-producer-pm-xml2json-0:80"
+        - name: FILESTORE_USER
+          value: "admin"
+        - name: FILESTORE_PWD
+          value: "adminadmin"
+        - name: FILESTORE_SERVER
+          value: "minio-server:9000"
+        - name: CREDS_GRANT_TYPE
+          value: "client_credentials"
+        - name: CREDS_CLIENT_SECRET
+          value: "YfFsEiZK17bZA46ZYHkBNOV1SbZwDmTK"
+        - name: CREDS_CLIENT_ID
+          value: "kafka-producer-pm-xml2json"
+        - name: AUTH_SERVICE_URL
+          value: "http://keycloak:8080/realms/nonrtric-realm/protocol/openid-connect/token"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /application_configuration.json
+          subPath: application_configuration_xml2json.json
+        - name: pm-files-storage
+          mountPath: /pm-files
+      volumes:
+      - name: config-volume
+        configMap:
+          name: pm-config
+      - name: pm-files-storage
+        persistentVolumeClaim:
+          claimName: pm-files-pvc

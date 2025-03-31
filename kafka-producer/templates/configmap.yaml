@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pm-config
+data:
+  application_configuration_xml2json.json: |
+    {
+        "types": [
+          {
+            "id": "xml-file-data-to-filestore",
+            "kafkaInputTopic": "collected-file"
+          }
+        ]
+    }
+

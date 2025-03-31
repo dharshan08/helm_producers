@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pm-producer-json2kafka
+  labels:
+    app: pm-producer-json2kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pm-producer-json2kafka
+  template:
+    metadata:
+      labels:
+        app: pm-producer-json2kafka
+        ranpm: "yes"
+    spec:
+      # Optional: Wait for auth-token service to be available
+      initContainers:
+      - name: wait-for-auth-token
+        image: busybox
+        command:
+          - sh
+          - -c
+          - |
+            echo "Waiting for auth-token service..."
+            until nslookup auth-token-file-pm-producer-json2kafka; do
+              echo "Waiting..."; sleep 2;
+            done
+      containers:
+      - name: pm-producer-json2kafka
+        image: nexus3.o-ran-sc.org:10001/o-ran-sc/nonrtric-plt-pmproducer:1.0.1
+        ports:
+        - containerPort: 8084
+        env:
+        - name: APP_PM-PRODUCER-BASE-URL
+          value: "http://pm-producer-json2kafka:8084"
+        volumeMounts:
+        # Mount the configuration files from the ConfigMap
+        - name: config-volume
+          mountPath: /opt/app/pm-producer-service/data/application_configuration.json
+          subPath: application_configuration.json
+        - name: config-volume
+          mountPath: /opt/app/pm-producer-service/config/application.yaml
+          subPath: application.yaml
+        # Mount the token cache volume
+        - name: token-cache-volume
+          mountPath: /token-cache
+        # Mount the shared files volume
+        - name: shared-volume
+          mountPath: /pm-files
+      volumes:
+      - name: config-volume
+        configMap:
+          name: pm-producer-config
+      - name: token-cache-volume
+        persistentVolumeClaim:
+          claimName: pm-token-cache-pvc
+      - name: shared-volume
+        persistentVolumeClaim:
+          claimName: pm-shared-files-pvc
+
